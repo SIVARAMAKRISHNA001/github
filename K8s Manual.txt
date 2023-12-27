@@ -1,0 +1,807 @@
+Container Orchestration
+=======================
+
+Pre-req
+-------
+- Linux Basics
+- DevOps
+- Docker Basics
+- Any cloud Knowledge (AWS,Azure,Gcp...etc)
+
+What is Kubernetes?
+-------------------
+> It is a system software
+> Kubernetes is an open-source container orchestration system for automating software deployment, scaling, and management.
+> Google originally designed Kubernetes, but the Cloud Native Computing Foundation now maintains the project.
+> Developed with "GO" Language
+> k8s is google's internal project.
+> Google open-sourced the Kubernetes project in 2014.
+> Kubernetes combines over 15 years of Google's experience running production workloads at scale with best-of-breed ideas and practices from the community.
+
+why kubernetes called k8s?
+--------------------------
+The name Kubernetes originates from Greek, meaning helmsman or pilot.
+K8s as an abbreviation results from counting the eight letters between the "K" and the "s".
+
+Why Kubernetes?
+---------------
+
+Physical/Traditional Servers --> Virtual servers(vmware,virtual box..etc)--> Cloud --> Micro services (k8s)
+Note:- Micro services are hot cake in the current market.
+
+1. SDLC (software development life cycle)
+   RG--->RA--->DOC--->Dev--->Qa--->Pre-Prod--->Prod--->Release
+   Note:- sometimes app will work in dev env and same app will not run/deploy in other env like prod.pre-prod...etc
+   Note:- same point we discussed in docker containers.
+
+2. Cloud Deployments take time
+   bcz in the cloud also again they launch one virtual-server, os, config, design, templates,...etc
+3. Multiple servers for multiple applications
+
+Coming to Kubernetes
+
+1. Only one image in all the departmennts of SDLC
+   Note:- If the image is working in one env, then 200% it will work in other env's also
+2. Container are very fast to deploy and start the applications.(With in seconds only)
+   Note:- Instead of 6 months only 2 months enoughf
+3. In one server you can run multiple applications using containers.
+
+Images:
+------
+ Is collection of actions and some metadata, it made of layers, each layer can add,change and remove files
+   --> A  base image is nothing but OS minus kernal. it has only "BOOTFS"
+   --> Docker image consists different layers the 1st layer of the image consist of OS bootable files of that OS,
+       only through  which it is going to recognize/treating the container as a seperate OS.
+       and on the top of that whatever we specifing like creating files,installtions,& configurations will treat it as a seperate layers.
+   --> image are readonly filesystem, we can't edit. If you want to edit then we need to run the image with a container 
+   --> Docker images are lightweight and portable.
+
+   @ docker pull centos
+   @ docker images
+
+Registrys
+---------
+1. Docker Hub (Public Registry and it is very famous)
+2. Elastic Container Registry(ECR)
+3. Azure Container Registry(ACR)
+...etc
+
+
+Containers
+----------
+- The word “container” is nothing
+- container is a "process" like how we have in our operating systems(task manager).
+- it is a combination of few linux kernal features like namespaces and cgroups 
+      > Namespaces:- one processes should be separated from the other processes on the computer.
+                    it acts like a wall between two processes(isolation)
+
+      > Cgroups:- are resource limits. it limits the resource(CPU,Memory..etc) for every process.
+
+- Finally Docker entered into the market to provide namespaces and cgroups in on place.
+  Docker is a company which is having docker engine.
+
+
+Docker Installation:
+===================
+Before installing docker check ifconfig  (or)  ip addr, it'll show you only ethernet0("eth0") network. where sys ipaddr exists.
+after installing docker check ifconfig  (or)  ip addr,  it'll show you docker bridge network i.e "docker0"
+Note:- if "ifconfig" is not working then, we need to install it by using this command. "apt install net-tools"
+Note:- By using bridge n/w(docker0) it'll create containers in docker-host and by using eth0 it'll send traffic outside. 
+Note:- Docker-Host --> place where the containers run.
+Note:- Docker-Guest --> Containers are guests 
+  
+Amazon Linux
+------------
+1. sudo yum update -y
+2. sudo yum install docker -y
+3. sudo systemctl start docker
+4. docker --version
+Note:-  in amazon linux already docker repos are exists.
+
+Ubuntu
+------
+If you want particular version of docker to install, then go to official docker docs.
+  https://docs.docker.com/ --> Download and Install --> Docker Desktop for Linux --> Installation per Linux distro --> Ubuntu
+
+If you want to install very latest version of docker then fallow bellow command.
+   > go to https://get.docker.com/ (This is a shell script to install docker latest version)
+   > curl https://get.docker.com/ | wc -l      (or)     curl -sL https://get.docker.com/ | wc -l
+   > curl https://get.docker.com/ | bash
+   > docker
+   > docker version
+
+
+Container Orchestration Layers / Managed K8s
+--------------------------------------------
+Amazon Elastic Kubernetes Service (EKS)
+Azure Kubernetes Service (AKS)
+Google Kubernetes Engine (GKE)
+Docker Swarm
+kubernetes
+
+Diff Docker and k8s
+-------------------
+ -> Docker creates and run the containers
+ -> k8s manages the containers which are inside docker hosts.
+
+
+kubernetes archetecture
+=======================
+
+-> kube Admins
+-> Managment Layer/control plane
+
+Kubernetes Components
+---------------------
+1. Control Plane Components (Runs on Master-Nodes)
+2. Worker-Node Components
+
+1. Control Plane Components
+---------------------------
+
+(i)  kube-API server:- always the communication with k8s is through kube-API server only with "yet another markup language(YAML)"
+                     kube-api will not store the admin req. it will send to etcd database to store.
+	Note:- API Stands for Application Programming Interface
+(ii) etcd(pronounced et-see-dee)  database:- it is Distributed systems. unlike oracle, sql...etc(active and passive systems)
+  	Note:- if you get any new changes from kube api server, then it'll update parallely in all other master nodes.
+(iii)kube scheduler:- always communicate with kube-API to schedule the containers on worker nodes.
+		 - it contains info about worker nodes, based on that it will schedule but not deploy.
+                 eg:- container-1 ---> worker node-1
+                      container-2 ---> worker node-2
+		      container-3 ---> worker node-3               
+        Note:- this is the only task it do	 
+(iv) kube controller manager:-  also connected with kube-API
+
+ Def:- Logically, each controller is a separate process, but to reduce complexity, they are all compiled into  a single binary and run in a single process.
+
+  - Node controller:- Responsible for noticing and responding when nodes go down.
+	Note:- when nodes down you will not get any info from kubectl. 
+  - Job controller:- Watches for Job objects that represent one-off tasks, then creates Pods to run those tasks to completion.
+  - Endpoints controller:- Populates the Endpoints object (that is, joins Services & Pods).
+  - Service Account & Token controllers:- Create default accounts and API access tokens for new namespaces.
+
+(v) cloud-controller-manager:- A Kubernetes control plane component that embeds cloud-specific control logic. 
+                               - if you deploy in aws cloud, then it stores aws cloud info. (optional)
+
+
+2. Worker-Node Components:
+-------------------------
+(i) kubelet:- is a service/software/agent/deamon
+	   - it is a software which runs internally as a service in every worker node.
+           - it establish the communication between worker node  and control plane which is in master node.
+           - it knows all the information about worker node and that info it is transfers to kube-API and from kube-api to kube scheduler.
+              (Note:- this is how kube-scheduler knows about worker nodes-1,2,3) 
+           - here kubelet taking the responsibility to deploy containers in worker nodes based on admin req.
+(ii) kube proxy:- responsibility is to allow users traffic into worker nodes.
+              eg: use cases:-  Pokemon GO, The New York Times adapts Kubernetes
+
+       Note:- Apart from kubelet remaining all will run as a containers/pods
+
+Master node:- management related container will run (api's, database, schedulers, controllers, monitoring, logs...etc)
+          note:- master nodes will create based on these 1,3,5,9,11..etc and only one will be the leader. it fallows raft algorithm.
+    
+worker node:- application related containers will run here (java, .net, ...etc)
+
+
+Installation
+============
+
+Ways:
+-----
+Kops
+Kubeadm
+minikube
+
+
+Pre-req
+-------
+1. AWS Account
+2. DNS Domain Name (Rec:- GoDaddy)
+3. Route 53
+4. s3 Bucket for storage
+5. Launch ubuntu instance in aws
+6. Install aws CLI
+7. Kubernetes Operations (kOps) - Production Grade k8s Installation.
+8. Install kubectl
+9. ssh-keygen
+10. create access key id and secret access key
+
+
+1. AWS Account:
+---------------
+     - CREATE ONE AWS FREE TIER PERSONAL ACCOUNT https://aws.amazon.com/console/
+
+2. DNS Domain Name:
+-------------------
+     - create one domain name from any domain providers, recommanded GoDaddy. 
+
+3. Route 53: 
+-----------
+     - create one hosted zone using domain name in route 53.
+     - update Nameserver records in GoDaddy
+     - A hosted zone is a container that holds information about how you want to route traffic for a domain.
+     - A hosted zone tells Route 53 how to respond to DNS queries for a domain such as   
+
+4. s3 (Amazon Simple Storage Service) Bucket:
+--------------------------------------------
+     - it stores entire cluster information.
+
+5. Launch ubuntu instance in aws:
+--------------------------------
+     - launch ubuntu instance of any version in aws cloud
+     - sudo -i 
+     - apt update -y
+     - apt install unzip -y 
+
+6. Install aws CLI:
+------------------
+Def:- The AWS Command Line Interface (AWS CLI) is a unified tool to manage your AWS services. With just one tool to download and configure, you can control multiple AWS services from the command line and automate them through scripts.
+
+     -      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+     -      unzip awscliv2.zip
+     -      sudo ./aws/install
+     -      aws --version (or) /usr/local/bin/aws --version
+Note:- https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+Note:- https://github.com/aws/aws-cli/releases/tag/2.9.19
+     
+
+7. Kubernetes Operations (kOps) - Production Grade k8s Installation: 
+--------------------------------------------------------------------
+Def:- kOps, also known as Kubernetes operations, is an open-source project which helps you create, destroy, upgrade, and maintain a highly available, production-grade Kubernetes cluster.
+ 
+     -       sudo wget  https://github.com/kubernetes/kops/releases/download/v1.26.0-beta.2/kops-linux-amd64     
+     -       sudo chmod +x kops-linux-amd64 
+     -       sudo mv kops-linux-amd64 /usr/local/bin/kops
+     -       kops version
+ Note:- https://kubernetes.io/docs/setup/production-environment/tools/kops/   
+
+8. Install kubectl:
+-------------------
+Def:- The Kubernetes command-line tool, kubectl, allows you to run commands against Kubernetes clusters. You can use kubectl to deploy applications, inspect and manage cluster resources, and view logs. 
+
+   You must use a kubectl version that is within one minor version difference of your cluster.
+   For example, a v1.26 client can communicate with v1.25, v1.26, and v1.27 control planes.
+   Using the latest compatible version of kubectl helps avoid unforeseen issues.
+
+   Note:-  https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+     -    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+     -    sudo chmod +x kubectl
+     -    sudo mv kubectl /usr/local/bin/kubectl
+     -    kubectl version (or) kubectl version --short/--client
+
+9. SSH key pair: 
+--------------- 
+Def:- The SSH key pair is used to authenticate the identity of a user or process that wants to access a remote system using the SSH protocol.
+
+This will generate a public and private key pair in the directory You are currently in, the public key will have the same name as the private key but with file extension key.pub
+
+     - ssh-keygen
+     - by using public and private keys cluster will deploy.
+
+10. create access key id and secret access key:
+----------------------------------------------- 
+      - Select IAM service
+      - create a user with Administrative Access
+      - aws configure
+      - AWS Access Key ID [None]: AKIA45GS2Y4IWCZXJBVY
+      - AWS Secret Access Key [None]: 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
+      - Default region name [None]: us-east-1
+      - Default output format [None]: json
+
+Verify-Before-Deploy:
+--------------------
+      - aws s3 ls
+      - aws ec2 describe-vpcs | jq 
+
+Note:- The JQ command is used to transform JSON data into a more readable format and print it to the standard output on Linux. The JQ command is built around filters which are used to find and print only the required data from a JSON file.
+
+Suggestions: (optional)
+ * list clusters with:
+    -  kops get clusters  --state=s3://
+ * edit this cluster with: 
+    - kops edit cluster  --state=s3://
+ * edit your node instance group:
+    -  kops edit ig --name= nodes-us-east-1a --state=s3://
+ * edit your master instance group: 
+    - kops edit ig --name= master-us-east-1a --state=s3://
+
+ * Finally configure your cluster with:
+    -  kops update cluster --name   --state=s3:// --yes --admin
+
+Note:- Must specify --yes to apply changes
+
+11. Deploy Cluster using Kops:
+------------------------------
+kops create cluster --name harmonytunes.online --state=s3://harmonytunes.online --zones=us-east-1c --node-count=2 --node-size=t2.micro --master-size=t3.medium --master-volume-size 20 --node-volume-size 10 --dns-zone=harmonytunes.online --yes
+
+
+--zones:-
+Defines the zones in which the cluster is going to be created. Multiple comma-separated zones can be specified to span the cluster across multiple zones.
+--name:-
+Defines the cluster’s name.
+--state:- 
+Points to the S3 bucket that is the state store.
+--yes:- 
+Immediately creates the cluster. Otherwise, only the cloud resources are created and the cluster needs to be started explicitly using the command "kops update --yes". If the cluster needs to be edited, then the "kops edit cluster" command can be used.
+
+
+
+Verify-After-Deploy:
+-------------------
+       - kops validate cluster --state=s3://harmonytunes.online
+       - kops get clusters  --state=s3://harmonytunes.online
+       - verify route 53
+       - kubectl version --short
+	   -> Client Version: v1.26.0 -> this is kubectl version
+	   -> Server Version: v1.25.5 -> The Server Version is the version of Kubernetes your cluster is running.
+       - kubectl get nodes
+       - kubectl get pods -A
+       - ps -ef | grep -i cubelet --> run this command in worker nodes
+
+12. kops delete cluster --name harmonytunes.online --state=s3://harmonytunes.online --yes
+13. kops update cluster --name harmonytunes.online --state=s3://harmonytunes.online --yes
+Note:- If multiple cluster states are stored in the same bucket, then --name <NAME> can be used to specify the exact cluster name.
+
+cluster-info:
+------------
+       - kubectl cluster-info
+Note:- we are not connecting directly to master server from mgmt/gem/k8s-admin server. we are connecting to address https://api. in the background. in case of 3 master-nodes, we will fallow raft algorithm.
+
+
+
+PODs:
+====
+
+Container ---> pod ---> Riplica set ---> Deployment ---> Service <<----- INTERNET
+
+Def-1:- Pods, as the smallest type of object you can deploy inside a Kubernetes cluster, pods are the fundamental building blocks of Kubernetes workloads.
+
+Def-2:- In Kubernetes, A Pod (as in a pod of whales or pea pod) is a group of one or more containers, with shared storage and network resources. acts like wrapper around a container.
+Put another way, a Kubernetes Pod is a set of containers that perform an interrelated function and that operate as part of the same workload.
+
+it is a good practice to have one container per Pod. The option to have more than one container per Pod is meant for auxiliary containers that act as sidecars/helper containers.
+
+Note:- for one application we have multiple pods inside, which are distributed between multiple worker-nodes for backup.
+
+Individual pods creation Ways:
+------------------------------
+
+1.Imperative syntax :- not recommended in production.
+   - kubectl run vmtutes --image=vinodhk070/vmtutes:v1
+     Note:- here you'll not get records history what you done previously.
+
+2. Declarative syntax
+     - kubectl run vmtutes --image=vinodhk070/vmtutes:v1 --dry-run=client
+     - kubectl run vmtutes1 --image=vinodhk070/vmtutes:v1 --dry-run=client -o yaml / json
+
+YAML-FORMET
+echo '
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: aditya
+  name: aditya
+spec:
+  containers:
+  - image: vinodhk070/vmtutes:v1
+    name: aditya ' 
+
+
+kubectl apply -f vm.yaml
+Note:- we'll use declarative in production and certifications.
+-------------------------------------------------------------
+JSON-FORMET
+
+{
+   "kind":"Pod",
+   "apiVersion":"v1",
+   "metadata":{
+      "name":"vmtutes1",
+      "labels":{
+         "run":"vmtutes1"
+      }
+   },
+   "spec":{
+      "containers":[
+         {
+            "name":"vmtutes1",
+            "image":"vinodhk070/vmtutes:v1",
+            "resources":{
+               
+            }
+         }
+      ]
+   }
+}
+
+NOTE:- we'll not create containers directly in k8s.
+NOTE:- Individual pods creation is not recommended in real-time.
+for troubleshoot purpose we will create individual pod. 
+
+kubectl run vmtutes --image=vinodhk070/vmtutes:v1 --bash
+kubectl run vmtutes --image=centos
+kubectl get pods
+kubectl get pods -A
+kubectl get pods -Ao wide
+kubectl get pods -n kube-system
+kubectl logs vmtutes
+kubectl logs kube-scheduler-i-0bd058c0eedfdf7a5 -n kube-system
+kubectl exec -it vmtutes -- bash --> to enter into pod
+kubectl describe pod vmtutes
+kubectl describe node i-0d8405ddc21b4f972(node_name)
+apt-get install iputils-ping -y
+apt-get install dnsutils -y
+apt-get install net-tools -y
+kubectl delete pods vmtutes (or) --all
+kubectl get pods --show-labels
+
+
+Replicasets
+===========
+- It maintains the replica count.
+- it'll increase if count is less then your reqirement and reduce if more then your req.
+
+A ReplicaSet(RS) is a Kubernetes object that ensures there is always a stable set of running pods for a specific workload. The ReplicaSet configuration defines a number of identical pods required, and if a pod is evicted or fails, creates more pods to compensate for the loss.
+
+In Kubernetes, you do not create ReplicaSets directly. ReplicaSets are set up as part of the Deployment.
+
+NAME       DESIRED   CURRENT   READY   AGE
+vmtutes.     3         3         3     13s
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: vmtutes
+  labels:
+    app: guestbook
+    tier: vmtutes
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      tier: vmtutes
+  template:
+    metadata:
+      labels:
+        tier: vmtutes
+    spec:
+      containers:
+      - name: vinodh-machireddy-tutorials
+        image:vinodhk070/vmtutes:v1
+
+
+kubectl apply -f -
+
+Deployments
+===========
+- it conatins all the information to create pods. like images, labels, names, port-numbers...etc
+- A deployment is an object in Kubernetes that helps you to manage a group of identical pods.
+- In a deployment we will tell K8s how many replicas of the pod we want to run in our cluster.
+- Without a deployment, you can't produce to create, update, and delete a bunch of pods manually.
+- Mainly for rolling updates
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abhi-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: vinodhk070/vmtutes:v1
+        ports:
+        - containerPort: 80
+
+
+- kubectl apply -f -
+- kubectl get deploy
+- kubectl get deployment -n=development
+- kubectl delete deploy nginx-deployment
+
+
+Service
+========
+A service can be defined as a logical set of pods. It can be defined as an abstraction on the top of the pod which provides a single IP address and DNS name by which pods can be accessed.
+
+With Service, it is very easy to manage load balancing configuration. It helps pods to scale very easily.
+Note:- kubernetes service acts like a load balancer.
+note:- for one deployment we can give multiple services. 
+
+internal communication between pods in the cluster is default.
+kubectl exec -it vmtutes-pod1 -- bash --> to enter into pod.
+kubectl exec -it vmtutes-pod1 -- ping (pod ip) --> without entering into pod
+kubectl exec -it vmtutes-pod1 -- curl http://100.96.2.127 (pod ip)
+
+
+kubectl api-resources | grep services
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vmtutes-service
+spec:
+    selector:
+      app: nginx
+    ports:
+      - port: 8000 # this is the port on which service receives the request
+        targetPort: 80 # targetport is the port on which container is running
+        protocol: TCP
+
+
+
+
+
+Types:
+-----
+1. ClusterIP
+2. NodePort
+3. LoadBalancer
+
+to create service:
+- kubectl expose deploy nginx-deployment --port=8000 --target-port=80 --type=ClusterIP (Imperative syntax)
+- kubectl expose deploy nginx-deployment --port=8000 --target-port=80 --type=ClusterIP -o yaml --dry-run=client  (Declarative)
+
+
+1. ClusterIP
+------------
+- ClusterIP is the default and most common service type.
+- we Can't comm/conn from internet to cluster through cluster ip. only internal communication.
+- Kubernetes will assign a cluster-internal IP address to ClusterIP service. This makes the service only reachable within the cluster.
+
+use-case:-
+It is for Inter service communication within the cluster. For example, communication between the front-end and back-end components/Modules of your app.
+
+Endpoints:-
+- to see how many pods are connected to your service
+- to check whether our service is working or not / troubleshooting
+kubectl describe svc <service-name>
+kubectl get endpoints
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: NodePort-service
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+  type: ClusterIP
+
+2. NodePort
+-----------
+- A NodePort is an open port on every node of your cluster. Kubernetes routes incoming traffic on the NodePort to your service.
+- NodePort service is an extension of ClusterIP service. A ClusterIP Service, to which the NodePort Service routes, is automatically created.
+- You can contact the NodePort Service, from outside the cluster, by requesting <NodePublicIP>:<NodePort>
+- Node port must be in the range of 30000–32767. 
+
+- kubectl expose deploy nginx-deployment --port=8000 --target-port=80 --type=NodePort -o yaml --dry-run=client
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx-deployment
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 80
+    nodePort: 32111
+  selector:
+    app: nginx
+  type: NodePort
+
+
+3. LoadBalancer
+---------------
+- LoadBalancer service is an extension of NodePort service. NodePort and ClusterIP Services, to which the external load balancer routes, are automatically created.
+- It integrates NodePort with cloud-based load balancers.
+- It exposes the Service externally using a cloud provider’s load balancer.
+
+The exact implementation of a LoadBalancer is dependent on your cloud provider, and not all cloud providers support the LoadBalancer service type. Moreover, if you’re deploying Kubernetes on bare metal, you’ll have to supply your own load balancer implementation. That said, if you’re in an environment that supports the LoadBalancer service type, this is likely the safest, simplest way to route your traffic.
+
+Use Cases
+When you are using a cloud provider to host your Kubernetes cluster.
+This type of service is typically heavily dependent on the cloud provider.
+
+- kubectl expose deploy nginx-deployment --port=8000 --target-port=80 --type=NodePort -o yaml --dry-run=client
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-frontend-service
+spec:
+  type: LoadBalancer
+  clusterIP: 10.0.171.123
+  loadBalancerIP: 123.123.123.123
+  selector:
+    app: web
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+
+
+Labels
+======
+- Labels are key/value pairs that are attached to objects, such as pods.
+- you must make use of these labels to select and filter the pods using label selectors.
+- a object can have more than one label and each key must be unique for a given pods.
+
+
+Create a Pod with Labels
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: srktunes
+  labels:
+    app: nginx
+    tutes: tutorials 
+    
+spec:
+  containers:
+  - name: first-container
+    image: nginx
+
+kubectl get pods -l vmtutes=Vinodh-Machireddy-Tutorials
+kubectl get pods -l  run=pod-name (default)
+Note: default label is "run=pod-name
+
+kubectl get pods --show-labels
+kubectl describe pod vmtutes.yaml
+
+Adding Labels to a Running Pod
+You can update the existing label or add the new one using below command
+
+kubectl label pod vmtutes tutes=tutorials
+kubectl label pod vmtutes team=dev org=vm
+kubectl label pod vmtutes app=nginx1 --overwrite
+
+To remove label
+kubectl label pod vmtutes tutes-
+
+
+Field Selector:
+===============
+- Field selector is used to filtering Kubernetes objects based on the value of one or more resource fields.
+- How to use filed selector to list the pods
+kubectl get pods --field-selector status.phase=Running
+kubectl get pods --field-selector=metadata.name=vm1
+kubectl get pods --field-selector=metadata.namespace=default
+
+if you want to add additional column to your queary result then add flag "-L"
+kubectl get pods --field-selector=metadata.namespace=default,status.phase=Running -L vmtutes,vm
+
+Annotaions
+==========
+While "labels" and "selectors" are used to group and select objects, annotations are used to record other details for information. Such as their names, version, build tags, author, email etc..
+
+Attaching metadata to objects
+
+You can use either labels or annotations to attach metadata to Kubernetes objects. Labels can be used to select objects and to find collections of objects that satisfy certain conditions. In contrast, annotations are not used to identify and select objects. The metadata in an annotation can be small or large, structured or unstructured, and can include characters not permitted by labels.
+
+Annotations, like labels, are key/value maps:
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: annotations-demo
+  annotations:
+    name: VmTutes
+    email: vinodh-machireddy@vmtutes.com
+    author: Vinodh Machireddy  
+    imageregistry: "https://hub.docker.com/"  
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.14.2
+    ports:
+    - containerPort: 80
+
+How to add annotation using command line
+kubectl annotate pod pod-with-annotation jiralink=DED-232
+kubectl annotate --overwrite pod <pod_name> <annotation_key>=<annotation_label>
+
+Delete the annotation
+kubectl annotate pod pod-with-annotation imageregistry-
+
+Namespaces
+==========
+- Namespaces are a way to organize clusters into virtual sub-clusters 
+— they can be helpful when different teams or projects share a Kubernetes cluster. Any number of namespaces are supported within a cluster, each logically separated from others but with the ability to communicate with each other.
+
+1.default:- The default namespace for objects with no other namespace
+2.kube-system:-  The namespace for objects created by the Kubernetes system
+3.kube-public:- This namespace is created automatically and is readable by all users (including those not authenticated). This namespace is mostly reserved for cluster usage, in case that some resources should be visible and readable publicly throughout the whole cluster. The public aspect of this namespace is only a convention, not a requirement.
+
+You can list the current namespaces in a cluster using:
+kubectl get namespace
+
+kubectl get namespaces default
+kubectl describe namespaces kube-system
+
+kubectl create namespace vmtutes
+kubectl run pod --image=nginx -n vmtutes
+kubectl get pods -n vmtutes
+kubectl get pods -l run=pod -n vmtutes
+kubectl delete namespaces   Warning: This deletes everything under the namespace!
+
+
+Sidecar Container
+-----------------
+A Pod can have multiple containers running apps within it, but it can also have one or more init containers, which are run before the app/main containers are started.
+
+Init containers are exactly like regular containers, except:
+
+- Init containers always run to completion.
+- Each init container must complete successfully before the next one starts. otherwise it will be restarted.
+- it will run the init containers in sequence, in case of multiple init containers.
+
+Note:- If a Pod's init container fails, the kubelet repeatedly restarts that init container until it succeeds.
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    container: init-container
+  name: vmtutes-pod
+spec:
+      containers:
+        - image: vinodhk070/vmtutes:v1
+          name: nginx-container
+      initContainers:
+        - image: busybox:latest
+          name: init-busybox-1
+          command: ["/bin/sh"]
+          args: ["-c", "sleep 30"]
+
+watch -n 1 kubectl get pods
+
+Note points:-
+=============
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+to find your full zone name for your region:
+aws ec2 describe-availability-zones --region eu-central-1
+ 
+Error: Validation failed: unexpected error during validation: error listing nodes: Unauthorized
+sol: kops export kubecfg  --name vmtutes.com --state=s3://vmtutes.com --admin
+
+Error: Could not connect to the endpoint URL" error message
+sol: https://repost.aws/knowledge-center/s3-could-not-connect-endpoint-url
+
+Note:- we can create multiple clusters by using multiple domain names. bcz kops need domain to deploy cluster.
+       we can create with multiple clusters sub-domains also.
+
+
+
+
+
+
+
+
+
+
